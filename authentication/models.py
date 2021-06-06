@@ -6,9 +6,14 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.hashers import make_password
 from django.apps import apps
 from django.utils import timezone
+import jwt
+from django.conf import settings
+from datetime import datetime, timedelta
 
 
 class MyUserManager(UserManager):
+    use_in_migrations = True
+
     def _create_user(self, username, email, password, **extra_fields):
         """
         Create and save a user with the given username, email, and password.
@@ -94,4 +99,7 @@ class User(AbstractBaseUser, PermissionsMixin, TrackingModel):
 
     @property
     def token(self):
-        return ''
+        token = jwt.encode(
+            {'username': self.username, 'email': self.email, 'exp': datetime.utcnow() + timedelta(hours=24)},
+            settings.SECRET_KEY, algorithm='HS256')
+        return token
